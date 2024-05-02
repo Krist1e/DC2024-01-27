@@ -58,6 +58,6 @@ public class PostController(IPostService service, IOutputCacheStore cacheStore) 
             .MaxBy(x => x.Quality ?? 1)
             ?.Value.ToString();
 
-        return string.IsNullOrEmpty(lang) ? "Unknown" : new RegionInfo(lang).TwoLetterISORegionName;
+        return string.IsNullOrEmpty(lang) ? "Unknown" : lang.Length > 2 ? new CultureInfo(lang).TwoLetterISOLanguageName : lang;
     }
 }

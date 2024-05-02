@@ -1,4 +1,5 @@
-﻿using Asp.Versioning;
+﻿using System.Globalization;
+using Asp.Versioning;
 using Discussion.Dto.Request;
 using Discussion.Dto.Response;
 using Discussion.Services.Interfaces;
@@ -25,8 +26,11 @@ public class PostController(IPostService service) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PostResponseTo>> CreatePost(PostRequestTo postRequestTo)
     {
-        PostResponseTo addedPost = await service.CreatePost(postRequestTo);
-        return CreatedAtAction(nameof(GetPost), new { id = addedPost.Id }, addedPost);
+        PostResponseTo addedPost = await service.CreatePost(GetRequestWithCountry(postRequestTo));
+        return CreatedAtAction(nameof(GetPost), new
+        {
+            id = addedPost.Id
+        }, addedPost);
     }
 
     [HttpDelete("{id:long}")]
@@ -39,6 +43,20 @@ public class PostController(IPostService service) : ControllerBase
     [HttpPut]
     public async Task<ActionResult<PostResponseTo>> UpdatePost(PostRequestTo updatePostRequestTo)
     {
-        return Ok(await service.UpdatePost(updatePostRequestTo));
+        return Ok(await service.UpdatePost(GetRequestWithCountry(updatePostRequestTo)));
+    }
+
+    private PostRequestTo GetRequestWithCountry(PostRequestTo requestTo) =>
+        string.IsNullOrEmpty(requestTo.Country)
+            ? requestTo with { Country = GetCountryFromRequest() }
+            : requestTo;
+
+    private string GetCountryFromRequest()
+    {
+        var lang = Request.GetTypedHeaders().AcceptLanguage
+            .MaxBy(x => x.Quality ?? 1)
+            ?.Value.ToString();
+        
+        return string.IsNullOrEmpty(lang) ? "Unknown" : lang.Length > 2 ? new CultureInfo(lang).TwoLetterISOLanguageName : lang;
     }
 }

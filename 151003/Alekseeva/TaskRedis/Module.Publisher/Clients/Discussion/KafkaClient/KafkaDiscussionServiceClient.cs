@@ -1,6 +1,7 @@
 ﻿using Publisher.Clients.Discussion.Dto.Message;
 using Publisher.Clients.Discussion.Dto.Request;
 using Publisher.Clients.Discussion.Dto.Response;
+using Publisher.Exceptions;
 using TaskRedis.ServiceDefaults.Kafka.SyncClient;
 namespace Publisher.Clients.Discussion.KafkaClient;
 
@@ -45,7 +46,7 @@ public class KafkaDiscussionServiceClient(KafkaSyncClient<InTopicMessage, OutTop
             new InTopicMessage(OperationType.Delete, new DiscussionPostRequestTo(id)));
 
         if (!outMessage.IsSuccess)
-            throw new Exception(outMessage.ErrorMessage);
+            throw new EntityNotFoundException(outMessage.ErrorMessage ?? string.Empty);
     }
 
     public async Task<DiscussionPostResponseTo> UpdatePost(DiscussionPostRequestTo postRequestTo)
@@ -54,7 +55,7 @@ public class KafkaDiscussionServiceClient(KafkaSyncClient<InTopicMessage, OutTop
             new InTopicMessage(OperationType.Update, postRequestTo));
 
         if (!outMessage.IsSuccess)
-            throw new Exception(outMessage.ErrorMessage);
+            throw new EntityNotFoundException(outMessage.ErrorMessage ?? string.Empty);
 
         return outMessage.Result.First();
     }

@@ -1,4 +1,5 @@
 using Projects;
+using TaskRedis.AppHost;
 using TaskRedis.AppHost.CassandraResource;
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -6,7 +7,10 @@ var redis = builder.AddRedis("redis", port: 6379);
 
 var kafka = builder.AddKafka("kafka", port: 9092);
 
-var postgres = builder.AddPostgres("postgres-publisher", port: 5432)
+var postgres = builder.AddPostgres("postgres-publisher", 
+        userName: builder.CreateStringParameter("postgres", "postgres-user"),
+        password: builder.CreateStringParameter("postgres", "postgres-password"),
+        port: 5432)
     .AddDatabase("distcomp-publisher", "distcomp");
 
 var cassandra = builder.AddCassandra("cassandra-discussion", port: 9042)

@@ -3,16 +3,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 namespace Publisher.Models;
 
-[Table("tbl_tweets")]
+[Table("tbl_tweet")]
 [Index(nameof(Title), IsUnique = true)]
 public class Tweet
 {
+    [Column("id")]
+    [Key]
     public long Id { get; set; }
 
-    [ForeignKey("Creator")] public long? CreatorId { get; set; }
+    [Column("creator_id")]
+    [ForeignKey("creator")] 
+    public long? CreatorId { get; set; }
 
-    [MaxLength(32)] public string Title { get; set; } = string.Empty;
-    [MaxLength(2048)] public string Content { get; set; } = string.Empty;
+    [Column("title")]
+    [MaxLength(32)] 
+    public string Title { get; set; } = string.Empty;
+    
+    [Column("content")]
+    [MaxLength(2048)] 
+    public string Content { get; set; } = string.Empty;
 
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public DateTime? Created { get; init; }

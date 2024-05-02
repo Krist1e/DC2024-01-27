@@ -1,4 +1,6 @@
 ﻿using Cassandra;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
 using ISession = Cassandra.ISession;
 namespace Discussion.Storage;
 
@@ -8,29 +10,17 @@ public sealed class CassandraConnectionFactory(CassandraDbOptions options, ILogg
         .AddContactPoint(options.Host)
         .WithPort(options.Port)
         .WithDefaultKeyspace(options.Keyspace)
-        .WithSocketOptions(new SocketOptions().SetReadTimeoutMillis(90000).SetConnectTimeoutMillis(90000))
         .WithReconnectionPolicy(new ConstantReconnectionPolicy(10000))
         .Build();
-    
-    public ISession Connect()
+
+    private readonly Policy _retryPolicy = Policy
+        .Handle<NoHostAvailableException>()
+        .WaitAndRetry(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(3), 5));
+
+    public ISession Connect() => _retryPolicy.Execute(() =>
     {
-        var retryCount = 5;
-        while (true)
-        {
-            try
-            {
-                logger.LogInformation("Connecting to Cassandra cluster");
-                return _cluster.ConnectAndCreateDefaultKeyspaceIfNotExists();
-            }
-            catch (NoHostAvailableException)
-            {
-                if (retryCount == 0)
-                    throw;
-                
-                Thread.Sleep(5000);
-                retryCount--;
-                logger.LogWarning("Failed to connect to Cassandra cluster. Retrying...");
-            }
-        }
-    }
+        ISession session = _cluster.Connect();
+        logger.LogInformation("Connected to Cassandra cluster: {ClusterName}", _cluster.Metadata.ClusterName);
+        return session;
+    });
 }

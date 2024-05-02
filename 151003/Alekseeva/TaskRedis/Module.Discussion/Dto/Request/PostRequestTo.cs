@@ -11,6 +11,5 @@ public record PostRequestTo(
     [StringLength(2048, MinimumLength = 2)]
     string Content,
     [property: JsonPropertyName("country")]
-    [StringLength(2, MinimumLength = 2)]
-    string Country
+    string? Country
 );
